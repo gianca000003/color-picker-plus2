@@ -1,6 +1,5 @@
 import streamlit as st
 from PIL import Image
-import pyperclip
 from streamlit_image_coordinates import streamlit_image_coordinates
 
 # Dizionario esteso di colori con nomi in italiano
@@ -49,7 +48,8 @@ if uploaded:
         st.markdown(f"- **HEX**: `{hex_color}`")
         st.color_picker("Anteprima", hex_color, disabled=True)
 
-        pyperclip.copy(hex_color)
-        st.success("HEX copiato automaticamente negli appunti!")
+        st.code(hex_color, language="text")
+        st.info("Copia il codice HEX sopra cliccando sull’icona 📋")
+
 else:
     st.info("⬆️ Carica un’immagine per iniziare.")
