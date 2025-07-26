@@ -1,23 +1,50 @@
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageDraw
 from streamlit_image_coordinates import streamlit_image_coordinates
 
 # Dizionario esteso di colori con nomi in italiano
 colori_nomi = {
     (255, 0, 0): "Rosso",
     (200, 0, 0): "Rosso scuro",
+    (255, 69, 0): "Rosso aranciato",
+    (255, 99, 71): "Pomodoro",
     (255, 192, 203): "Rosa",
+    (255, 182, 193): "Rosa chiaro",
+    (255, 105, 180): "Fucsia",
     (255, 165, 0): "Arancione",
+    (255, 140, 0): "Arancione scuro",
+    (255, 215, 0): "Oro",
     (255, 255, 0): "Giallo",
+    (255, 255, 224): "Giallo chiaro",
+    (238, 232, 170): "Giallo paglierino",
+    (173, 255, 47): "Verde giallastro",
     (0, 255, 0): "Verde",
-    (0, 0, 255): "Blu",
-    (128, 0, 128): "Viola",
-    (0, 0, 0): "Nero",
-    (255, 255, 255): "Bianco",
-    (128, 128, 128): "Grigio",
-    (139, 69, 19): "Marrone",
+    (0, 128, 0): "Verde scuro",
+    (34, 139, 34): "Verde foresta",
+    (46, 139, 87): "Verde mare",
     (0, 255, 255): "Ciano",
-    (255, 0, 255): "Magenta"
+    (0, 206, 209): "Ciano scuro",
+    (0, 191, 255): "Azzurro",
+    (135, 206, 250): "Azzurro chiaro",
+    (0, 0, 255): "Blu",
+    (0, 0, 139): "Blu scuro",
+    (25, 25, 112): "Blu mezzanotte",
+    (138, 43, 226): "Blu viola",
+    (128, 0, 128): "Viola",
+    (147, 112, 219): "Viola chiaro",
+    (75, 0, 130): "Indaco",
+    (0, 0, 0): "Nero",
+    (105, 105, 105): "Grigio scuro",
+    (128, 128, 128): "Grigio",
+    (169, 169, 169): "Grigio chiaro",
+    (211, 211, 211): "Grigio molto chiaro",
+    (139, 69, 19): "Marrone",
+    (160, 82, 45): "Marrone chiaro",
+    (210, 105, 30): "Cioccolato",
+    (255, 250, 240): "Avorio",
+    (255, 240, 245): "Lavanda chiaro",
+    (255, 0, 255): "Magenta",
+    (199, 21, 133): "Magenta scuro"
 }
 
 def nome_colore(rgb):
@@ -41,6 +68,14 @@ if uploaded:
         rgb = image.getpixel((x, y))
         hex_color = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
         nome = nome_colore(rgb)
+        
+        # Disegna il puntatore rosso sul punto cliccato
+        img_con_puntatore = image.copy()
+        draw = ImageDraw.Draw(img_con_puntatore)
+        raggio = 10
+        draw.ellipse((x - raggio, y - raggio, x + raggio, y + raggio), outline="red", width=3)
+        
+        st.image(img_con_puntatore, caption="Hai cliccato qui", use_column_width=True)
 
         st.markdown("### 🎯 Risultato")
         st.markdown(f"- **Colore**: {nome}")
