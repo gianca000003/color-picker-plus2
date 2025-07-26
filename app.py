@@ -2,7 +2,6 @@ import streamlit as st
 from PIL import Image, ImageDraw
 from streamlit_image_coordinates import streamlit_image_coordinates
 
-# Dizionario esteso di colori con nomi in italiano
 colori_nomi = {
     (255, 0, 0): "Rosso",
     (200, 0, 0): "Rosso scuro",
@@ -56,33 +55,47 @@ def nome_colore(rgb):
 st.set_page_config(page_title="Color Picker Web", layout="centered")
 st.title("🎨 Color Picker Web")
 
+# Inizializza la variabile di stato per memorizzare le coordinate cliccate
+if "coords" not in st.session_state:
+    st.session_state.coords = None
+if "rgb" not in st.session_state:
+    st.session_state.rgb = None
+
 uploaded = st.file_uploader("Carica un'immagine", type=["png", "jpg", "jpeg"])
 if uploaded:
     image = Image.open(uploaded).convert("RGB")
-    
-    coords = streamlit_image_coordinates(image)
-    st.image(image, caption="Clicca sull’immagine per ottenere il colore", use_column_width=True)
 
+    # Ottieni nuove coordinate (se cliccato)
+    coords = streamlit_image_coordinates(image)
+
+    # Se l'utente ha cliccato aggiorna lo stato
     if coords:
+        st.session_state.coords = coords
         x, y = coords["x"], coords["y"]
-        rgb = image.getpixel((x, y))
-        hex_color = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
-        nome = nome_colore(rgb)
-        
-        # Disegna il puntatore rosso sul punto cliccato
-        img_con_puntatore = image.copy()
-        draw = ImageDraw.Draw(img_con_puntatore)
+        st.session_state.rgb = image.getpixel((x, y))
+
+    # Crea immagine da mostrare (con o senza cerchietto)
+    img_to_show = image.copy()
+    if st.session_state.coords:
+        x, y = st.session_state.coords["x"], st.session_state.coords["y"]
+        draw = ImageDraw.Draw(img_to_show)
         raggio = 10
         draw.ellipse((x - raggio, y - raggio, x + raggio, y + raggio), outline="red", width=3)
-        
-        st.image(img_con_puntatore, caption="Hai cliccato qui", use_column_width=True)
+
+    # Mostra immagine (una sola volta)
+    st.image(img_to_show, caption="Clicca sull’immagine per ottenere il colore", use_column_width=True)
+
+    # Se c’è un colore selezionato, mostra info
+    if st.session_state.rgb:
+        rgb = st.session_state.rgb
+        hex_color = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
+        nome = nome_colore(rgb)
 
         st.markdown("### 🎯 Risultato")
         st.markdown(f"- **Colore**: {nome}")
         st.markdown(f"- **RGB**: {rgb}")
         st.markdown(f"- **HEX**: `{hex_color}`")
         st.color_picker("Anteprima", hex_color, disabled=True)
-
         st.code(hex_color, language="text")
         st.info("Copia il codice HEX sopra cliccando sull’icona 📋")
 
