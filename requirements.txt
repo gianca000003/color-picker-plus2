@@ -1,3 +1,4 @@
 streamlit
 pillow
 pyperclip
+streamlit-image-coordinates
