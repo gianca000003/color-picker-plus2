@@ -1,7 +1,10 @@
 import streamlit as st
 from PIL import Image, ImageDraw
 from streamlit_image_coordinates import streamlit_image_coordinates
+import numpy as np
+from sklearn.cluster import KMeans
 
+# Dizionario esteso di colori con nomi in italiano
 colori_nomi = {
     (255, 0, 0): "Rosso",
     (200, 0, 0): "Rosso scuro",
@@ -52,10 +55,30 @@ def nome_colore(rgb):
     più_vicino = min(colori_nomi.keys(), key=lambda c: distanza(rgb, c))
     return colori_nomi[più_vicino]
 
+def semplifica_immagine(img, n_colori=8):
+    img_np = np.array(img)
+    h, w, _ = img_np.shape
+    img_flat = img_np.reshape((-1, 3))
+
+    kmeans = KMeans(n_clusters=n_colori, n_init='auto', random_state=42)
+    kmeans.fit(img_flat)
+    colori_trovati = kmeans.cluster_centers_.astype(int)
+    labels = kmeans.labels_
+
+    diz_rgb = np.array(list(colori_nomi.keys()))
+    def colore_dizionario_piu_vicino(col):
+        dists = np.sum((diz_rgb - col) ** 2, axis=1)
+        return diz_rgb[np.argmin(dists)]
+
+    colori_mappati = np.array([colore_dizionario_piu_vicino(c) for c in colori_trovati])
+    img_simplified = colori_mappati[labels].reshape((h, w, 3)).astype(np.uint8)
+    return Image.fromarray(img_simplified)
+
+# Streamlit App
 st.set_page_config(page_title="Color Picker Web", layout="centered")
 st.title("🎨 Color Picker Web")
 
-# Inizializza la variabile di stato per memorizzare le coordinate cliccate
+# Session state
 if "coords" not in st.session_state:
     st.session_state.coords = None
 if "rgb" not in st.session_state:
@@ -65,16 +88,14 @@ uploaded = st.file_uploader("Carica un'immagine", type=["png", "jpg", "jpeg"])
 if uploaded:
     image = Image.open(uploaded).convert("RGB")
 
-    # Ottieni nuove coordinate (se cliccato)
     coords = streamlit_image_coordinates(image)
 
-    # Se l'utente ha cliccato aggiorna lo stato
     if coords:
         st.session_state.coords = coords
         x, y = coords["x"], coords["y"]
         st.session_state.rgb = image.getpixel((x, y))
 
-    # Crea immagine da mostrare (con o senza cerchietto)
+    # Disegna il cerchietto rosso se cliccato
     img_to_show = image.copy()
     if st.session_state.coords:
         x, y = st.session_state.coords["x"], st.session_state.coords["y"]
@@ -82,10 +103,8 @@ if uploaded:
         raggio = 10
         draw.ellipse((x - raggio, y - raggio, x + raggio, y + raggio), outline="red", width=3)
 
-    # Mostra immagine (una sola volta)
-    st.image(img_to_show, caption="Clicca sull’immagine per ottenere il colore", use_column_width=True)
+    st.image(img_to_show, caption="Clicca per ottenere il colore", use_column_width=True)
 
-    # Se c’è un colore selezionato, mostra info
     if st.session_state.rgb:
         rgb = st.session_state.rgb
         hex_color = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
@@ -98,6 +117,12 @@ if uploaded:
         st.color_picker("Anteprima", hex_color, disabled=True)
         st.code(hex_color, language="text")
         st.info("Copia il codice HEX sopra cliccando sull’icona 📋")
+
+    # Slider per personalizzare il numero di colori
+    st.markdown("### 🧪 Semplificazione dell'immagine")
+    num_colori = st.slider("Numero di colori principali da rilevare", 3, 15, 8)
+    simplified = semplifica_immagine(image, n_colori=num_colori)
+    st.image(simplified, caption="Immagine con colori ridotti", use_column_width=True)
 
 else:
     st.info("⬆️ Carica un’immagine per iniziare.")
