@@ -1,3 +1,5 @@
 streamlit
 pillow
 streamlit-image-coordinates
+scikit-learn
+numpy
